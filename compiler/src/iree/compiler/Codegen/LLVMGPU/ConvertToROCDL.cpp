@@ -245,9 +245,12 @@ struct ConvertToROCDLPass final
       if (allTypesValid.wasInterrupted()) {
         return signalPassFailure();
       }
+      bool supportsScaledExtTrunc =
+          !getGPUTargetAttr(m).getWgp().getScaledMma().empty();
       arith::populateArithToAMDGPUConversionPatterns(
           patterns, /*convertFP8Arithmetic=*/true, /*saturateFP8Truncf=*/false,
-          /*allowPackedF16Rtz=*/false, /*chipset=*/*maybeChipset);
+          /*allowPackedF16Rtz=*/false, supportsScaledExtTrunc,
+          /*chipset=*/*maybeChipset);
       arith::populateCeilFloorDivExpandOpsPatterns(patterns);
       populateSwapSetPrioWithMFMAPatterns(patterns);
       populateConvertGPUToAMDGPUPatterns(patterns, *maybeChipset);
@@ -261,8 +264,8 @@ struct ConvertToROCDLPass final
       vector::populateVectorContractLoweringPatterns(
           patterns, options.vectorContractLowering);
 
-      vector::populateVectorFromElementsLoweringPatterns(patterns);
-      vector::populateVectorToElementsLoweringPatterns(patterns);
+      vector::populateVectorFromElementsUnrollPatterns(patterns);
+      vector::populateVectorToElementsUnrollPatterns(patterns);
       vector::populateVectorGatherLoweringPatterns(patterns);
       vector::populateVectorMaskOpLoweringPatterns(patterns);
       // We currently always use 64 bit indices, thus ensure the bit width of
